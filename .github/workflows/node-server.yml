@@ -1,37 +1,59 @@
-name: Testar servidor Node.js
+name: Consulta CEP Workflow
 
 on:
   push:
     branches:
       - main
+
 jobs:
-  build_and_run:
+  test:
     runs-on: ubuntu-latest
 
     steps:
-    #Passo1
+
+      #Passo 1 Realizar checkout na maquina virtual
       - name: Checkout do código
         uses: actions/checkout@v3
 
-    #Passo2
+      #Passo 2 Configuar o ambiente para a versão do nodejs
       - name: Configurar Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20'
-    #Passo3
+          node-version: 20
+
+      #Passo 3 Instalar as dependências salvas no package.json
       - name: Instalar dependências
         run: npm install
 
-    #Passo4 Rodar o servidor
+        #Passo4 Rodar o servidor utilizando o "nohup" para executar o servidor em segundo plano
+        #para evitar interrupções ao encerrar o terminal
       - name: Rodar o servidor
         run: |
           nohup node app.js &
           echo "Servidor rodando em segundo plano..."
-          
-    #Passo5 Rodar o servidor
+
+        #Passo5 Rodar o servidor, utilizando o curl para realizar uma requisição
       - name: Testar se o servidor esta funcionando
         run: |
           sleep 10 # Espera o servidor iniciar
           curl http://localhost:3000 #verifica se o servidor responde
 
-    #Passo 6
+        #Passo 6 Executa o script de consulta de cep. Com o curl, envia uma requição
+        # para a URL do viacep e após isso aguarda
+      - name: Rodar script de consulta
+        run: |
+          sleep 10 
+          curl http://localhost:3000/consulta/01001000 &
+          sleep 5
+
+        #Passo 7 Verificar a resposta da url   
+      - name: Validar resposta
+        run: |
+          RESPONSE=$(curl -s http://localhost:3000/consulta/08430000)
+          echo $RESPONSE | grep '"logradouro":' || exit 1
+
+
+        #Passo 8 Exibir o que foi requisitado
+      - name: Exibir dados no pipeline
+        run: |
+          curl -s http://localhost:3000/consulta/08430000

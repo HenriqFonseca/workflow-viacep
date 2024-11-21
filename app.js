@@ -1,11 +1,18 @@
-const express = require('express')
-const app = express()
-const port = 3000
+const express = require('express');
+const axios = require('axios'); // Para fazer requisições HTTP
+const app = express();
 
-app.get('/', (req, res) => {
-    res.send('hello world')
-  })
+app.get('/consulta/:cep', async (req, res) => {
+    const { cep } = req.params;
+    try {
+        const response = await axios.get(`https://viacep.com.br/ws/${cep}/json/`);
+        res.json(response.data);
+    } catch (error) {
+        res.status(500).send('Erro ao consultar CEP');
+    }
+});
 
-app.listen(port, ()=>{
-    console.log(`Servidor rodando na porta ${port}`)
-})
+const PORT = 3000;
+app.listen(PORT, () => {
+    console.log(`Servidor rodando em http://localhost:${PORT}`);
+});
